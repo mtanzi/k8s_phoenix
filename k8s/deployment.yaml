@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: k8s-phoenix-deployment
+  namespace: production
+  labels:
+    app: k8s-phoenix
+    env: production
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  template:
+    metadata:
+      labels:
+        app: k8s-phoenix
+        env: production
+    spec:
+      containers:
+        - name: k8s-phoenix
+          image: mtanzi/k8s-phoenix:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          env:
+            - name: HOST
+              value: "example.com"
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: secret_key_base
+            - name: REPLACE_OS_VARS
+              value: "true"

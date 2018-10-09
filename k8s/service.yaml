@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-phoenix-service
+  namespace: production
+  labels:
+    app: k8s-phoenix
+    env: production
+spec:
+  type: LoadBalancer
+  selector:
+    app: k8s-phoenix
+    env: production
+  ports:
+    - port: 80
+      targetPort: 4000
+      protocol: TCP
+      name: http

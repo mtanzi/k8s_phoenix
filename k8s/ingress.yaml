@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: k8s-phoenix-service
+  namespace: production
+spec:
+  rules:
+  - host: k8s-phoenix.minikube
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: k8s-phoenix-service
+          servicePort: http
