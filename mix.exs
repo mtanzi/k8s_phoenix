@@ -4,7 +4,7 @@ defmodule K8sPhoenix.Mixfile do
   def project do
     [
       app: :k8s_phoenix,
-      version: "0.0.1",
+      version: "0.0.2",
       elixir: "~> 1.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
@@ -19,7 +19,7 @@ defmodule K8sPhoenix.Mixfile do
   def application do
     [
       mod: {K8sPhoenix.Application, []},
-      extra_applications: [:logger, :runtime_tools, :distillery]
+      extra_applications: [:logger, :runtime_tools, :distillery, :libcluster]
     ]
   end
 
@@ -38,7 +38,8 @@ defmodule K8sPhoenix.Mixfile do
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
-      {:distillery, "~> 2.0", runtime: false}
+      {:distillery, "~> 2.0", runtime: false},
+      {:libcluster, "~> 3.0"}
     ]
   end
 end

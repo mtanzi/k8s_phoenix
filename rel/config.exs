@@ -49,7 +49,10 @@ release :k8s_phoenix do
 
   set(
     applications: [
-      :runtime_tools
+      :runtime_tools,
+      k8s_phoenix: :permanent
     ]
   )
+
+  set(vm_args: "./rel/vm.args")
 end

@@ -7,7 +7,9 @@ defmodule K8sPhoenixWeb.HealthController do
     response = %{
       ok: DateTime.utc_now() |> to_string,
       version: app_version(),
-      hostname: to_string(hostname)
+      hostname: to_string(hostname),
+      node: Node.self(),
+      connected_to: Node.list()
     }
 
     conn

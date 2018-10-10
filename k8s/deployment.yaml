@@ -7,7 +7,7 @@ metadata:
     app: k8s-phoenix
     env: production
 spec:
-  replicas: 4
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,12 +19,25 @@ spec:
         app: k8s-phoenix
         env: production
     spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: vm-config
       containers:
         - name: k8s-phoenix
-          image: mtanzi/k8s-phoenix:v1
+          image: mtanzi/k8s-phoenix:v2
           imagePullPolicy: Always
           ports:
             - containerPort: 4000
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 4000
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          volumeMounts:
+            - name: config-volume
+              mountPath: /beamconfig
           env:
             - name: HOST
               value: "example.com"
@@ -33,5 +46,26 @@ spec:
                 secretKeyRef:
                   name: secrets
                   key: secret_key_base
+            - name: MY_BASENAME
+              value: k8s-phoenix
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: RELEASE_CONFIG_DIR
+              value: /beamconfig
             - name: REPLACE_OS_VARS
               value: "true"
+            - name: ERLANG_COOKIE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: erlang-cookie
