@@ -28,11 +28,11 @@ spec:
           image: mtanzi/k8s-phoenix:v2
           imagePullPolicy: Always
           ports:
-            - containerPort: 4000
+            - containerPort: 8080
           livenessProbe:
             httpGet:
               path: /api/health
-              port: 4000
+              port: 8080
             initialDelaySeconds: 60
             periodSeconds: 15
           volumeMounts:
