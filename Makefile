@@ -18,7 +18,7 @@ help:: ## Show this help
 	echo -e "\nVersion \033[32m$(VERSION)\033[0m"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "$(YELLOW)%-20s$(NO_COLOR) %s\n", $$1, $$2}'
 
-prepare-minikube: ## Prepare Hex env
+prepare-minikube: ## Prepare minikube env
 	eval $(minikube docker-env)
 	kubectl config set-context minikube
 
