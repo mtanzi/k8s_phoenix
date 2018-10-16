@@ -44,6 +44,21 @@ To test the application we can run the container using the following command
 » docker run -it --rm -p 8080:8080 -e "HOST=example.com" -e "SECRET_KEY=very-secret-key" -e "MY_BASENAME=k8s-phoenix" -e "MY_POD_IP=127.0.0.1" -e "ERLANG_COOKIE=erl-token" mtanzi/k8s-phoenix:v2
 ```
 
+> NOTE: To run this Docker container we need to pass also the `MY_BASENAME`, `MY_POD_IP` and `ERLANG_COOKIE` environment variables. In a normal single instance setup we do not need those variables, although since we want to start this application as a cluster, we need to set the `vm.args` values dynamically.
+
+```bash
+## rel/vm.args
+
+## Name of the node
+-name ${MY_BASENAME}@${MY_POD_IP}
+## Cookie for distributed erlang
+-setcookie ${ERLANG_COOKIE}
+# Enable SMP automatically based on availability
+-smp auto
+```
+
+> Also, the _Kubernetes_ *Pod* can be destroyed and recreated anytime so their *IP* can change without notice. The container orchestrator, in our case *Kubernetes*, is in charge for the creation of the new *Pod* and to start the Docker container passing to the *MY_POD_IP* variable the new *IP*.
+
 You can now call the health API you can see the following response.
 
 ```bash
@@ -199,3 +214,57 @@ When you want to stop the cluster, you can use the following make command.
 # kubectl -n production delete configmap vm-config
 » make stop
 ```
+
+#### Entrypoint
+
+At the moment, every time that we stop and start our service, we have to go through the slightly convoluted process to of finding the new *IP* and new *port* to be able to access the service.
+_Kubernetes_ provides a very neat way to avoid this work using the [*Ingress*](https://kubernetes.io/docs/concepts/services-networking/ingress/) object.
+
+We will use *Ingress* to map a domain name to our service, so every time that the service will be restarted and both the ip and port will be changed, *Ingress* will map them and expose them through the same domain name.
+
+By default *Minikube* doesn't have *Ingress* available, we need explicitly to enable it
+
+```bash
+» minikube addons enable ingress
+```
+
+We should also define the domain name we want to use to access our application and map it to the *Minikube* *IP* inside the `/etc/hosts` file
+
+```bash
+# Set Minikube IP inside /etc/hosts
+» echo "$(minikube ip) simple-api.minikube" | sudo tee -a /etc/hosts
+
+# Start Ingres service
+» kubectl -n production create -f k8s/ingress.yaml
+```
+
+Perfect! Now we can finally stop and start our service and access to the api using our new domain name
+
+```bash
+» http http://k8s-phoenix.minikube/api/health
+HTTP/1.1 200 OK
+cache-control: max-age=0, private, must-revalidate
+content-length: 232
+content-type: application/json; charset=utf-8
+date: Mon, 15 Oct 2018 22:34:52 GMT
+server: Cowboy
+x-request-id: 2leui3dnbk4ud69mr0000012
+
+{
+    "connected_to": [
+        "k8s-phoenix@172.17.0.7",
+        "k8s-phoenix@172.17.0.8",
+        "k8s-phoenix@172.17.0.10"
+    ],
+    "hostname": "k8s-phoenix-deployment-68cb84f69c-rkbf7",
+    "node": "k8s-phoenix@172.17.0.9",
+    "ok": "2018-10-15 22:34:52.751020Z",
+    "version": "0.0.2"
+}
+```
+
+#### Wrap Up
+
+As we can see, setting up and deploy a simple Phoenix application is fairly simple, it works out of the box, furthermore since our *API* is stateless we do not need to keep the global state of the application for the nodes in synch while the containers are dropping and restarting. *Kubernetes* is a great tool to manage the deployment of the application, it remove all the complexity that comes when we need to start to work with containers and distributed nodes to just few configuration files.
+
+On a final note, the code might get a bit more eerie if we start to deal with *statefull* applications. The state will need to be kept in synch across the cluster, for that we require to use more complex tools like a distributed Registry. There are already library like [Horde](https://github.com/derekkraan/horde) that comes handy for that, but let's keep all this for another project...
